@@ -7,7 +7,7 @@ My repository is structured as follows:
 
 | Documents | Description                        |
 |-----------|------------------------------------|
-| hw04.md   | the markdown file for homework 3   |
-| hw04.rmd | the R-markdown file for homework 3   |
+| hw04.md   | the markdown file for homework 4   |
+| hw04.rmd | the R-markdown file for homework 4   |
 | README.md | the file you are reading right now |
 |Others| Other files which are associated to the ones above|
