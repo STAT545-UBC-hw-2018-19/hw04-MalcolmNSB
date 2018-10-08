@@ -1,0 +1,204 @@
+---
+title: "HW04: Tidy data and joins"
+output: 
+  github_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data reshaping
+
+**Problem:** You have data in one “shape” but you wish it were in another. Usually this is because the alternative shape is superior for presenting a table, making a figure, or doing aggregation and statistical analysis.
+
+**Solution:** Reshape your data. For simple reshaping, gather() and spread() from tidyr will suffice. Do the thing that is possible / easier now that your data has a new shape.
+
+**Prompt:** Make a tibble with one row per year and columns for life expectancy for two or more countries from gapminder. 
+
+
+
+First we load the tidyverse package and gapminder dataframe.
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(gapminder))
+```
+
+```{r}
+fr_uk_lifeExp <- gapminder %>% 
+  rename(Year = year) %>% 
+  filter(country == "France" | country == "United Kingdom") %>% 
+  select(Year, country, lifeExp) %>% 
+  spread(key = "country", value = "lifeExp")
+  colnames(fr_uk_lifeExp)
+```
+
+ - Use `knitr::kable()` to make this table look pretty in your rendered homework.
+```{r}
+knitr::kable(fr_uk_lifeExp)
+```
+ 
+- Take advantage of this new data shape to scatterplot life expectancy for one country against that of another.
+```{r}
+fr_uk_lifeExp %>% 
+ggplot(aes(`United Kingdom`, France)) +
+  geom_point()
+```
+
+##Join Prompts
+
+**Problem:** You have two data sources and you need info from both in one new data object.
+
+**Solution:** Perform a join, which borrows terminology from the database world, specifically SQL.
+
+Prompts:
+
+Activity #1
+
+Create a second data frame, complementary to Gapminder. Join this with (part of) Gapminder using a dplyr join function and make some observations about the process and result. Explore the different types of joins. Examples of a second data frame you could build:
+        One row per country, a country variable and one or more variables with extra info, such as language spoken, NATO membership, national animal, or capitol city.
+        One row per continent, a continent variable and one or more variables with extra info, such as northern versus southern hemisphere.
+        
+We shall build a second data frame of countries, with national animal, NATO membership
+
+
+```{r}
+#x1 <- unique(select(gapminder, continent))
+#`Northern Hemisphere` <- c("Yes", "Yes", "Yes", "Yes", "No")
+#`Southern Hemisphere` <- c("Yes", "No", "Yes", "Yes", "Yes")
+#mutate(x1,`Northern Hemisphere`, `Southern Hemisphere`)
+
+#Creating our own tibble
+
+#column of chosen countries
+countries <- c("Canada", "United Kingdom", "France", "Russia")
+
+#column of continents corresponding to chosen countries
+continent<- c("Americas", "Europe", "Europe", "Asia") 
+
+#Lan <- c("English, French", "English", "French") `Official Language(s)` = Lan
+
+#column of national animal of corresponding country
+Anim <- c("Beaver", "Lion", "Gallic Rooster", "Bear") #national animal of corresponding coutries chosen above
+
+#column of NATO membership
+NATO <- c("Yes", "Yes", "Yes", "No") 
+
+#column of Capital city
+Cap <- c("Ottawa", "London", "Paris", "Moscow") 
+
+#create the tibble `addinfo` consisting of all the above columns
+(addinfo <- tibble(continent = continent, country = countries,  `national animal` = Anim, `NATO membership` = NATO, `capital city` = Cap))
+```
+```{r}
+#filter gapminder dataset to year 2007, and the countries in the countries column created earlier
+(gapfilt <- gapminder %>% 
+  filter(year == 2007, country%in%countries | country == "Norway") %>% 
+  
+  #select subset of data in 2007
+  select(continent, country, lifeExp))
+```
+
+
+```{r}
+#left join by country
+left_join(gapfilt, addinfo, by = "country")
+```
+```{r}
+left_join(gapfilt, addinfo)
+```
+```{r}
+left_join(addinfo, gapfilt)
+```
+
+
+
+```{r}
+
+
+#left_join(addinfo, gapfilt , by = "country")
+
+
+right_join(gapfilt, addinfo)
+```
+
+```{r}
+right_join(addinfo, gapfilt)
+```
+
+```{r}
+right_join(gapfilt, addinfo)
+```
+
+```{r}
+inner_join(gapfilt, addinfo)
+```
+
+
+```{r}
+inner_join(addinfo, gapfilt)
+```
+
+```{r}
+full_join(gapfilt, addinfo)
+bind_rows(gapfilt, addinfo)
+```
+
+
+```{r}
+full_join(addinfo, gapfilt)
+```
+
+
+```{r}
+semi_join(gapfilt, addinfo)
+```
+
+```{r}
+semi_join(addinfo, gapfilt)
+```
+
+
+```{r}
+anti_join(gapfilt, addinfo)
+```
+
+```{r}
+anti_join(addinfo, gapfilt)
+```
+
+```{r}
+bind_cols(gapfilt, addinfo)
+```
+
+
+
+```{r}
+(a <- select(gapfilt, continent, country))
+(b <- select(addinfo, continent, country))
+```
+
+```{r}
+intersect(a,b)
+```
+
+```{r}
+union(a,b)
+```
+
+```{r}
+setdiff(a,b)
+```
+
+```{r}
+setdiff(b,a)
+```
+
+#intersect(addinfo, gapfilt)
+#union()
+#setdiff()
+
+
+
+
