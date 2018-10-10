@@ -74,7 +74,7 @@ It looks like life is good in France and the United Kingdom! We'll just have to 
 **Solution:** Perform a join, which borrows terminology from the database world, specifically SQL.
 
 
-###Activity #1
+###National animals, NATO membership, and capital cities
 
 Create a second data frame, complementary to Gapminder. Join this with (part of) Gapminder using a dplyr join function and make some observations about the process and result. Explore the different types of joins. 
 
@@ -172,7 +172,7 @@ left_join(addinfo, gapfilt) %>%
 
 #### Right join
 
-If we right join `gapfilt` and `addinfo`, then we look for countries (& continents) in `gapfilt` that have a match in `addinfo`, and add the corresponding rows of `gapfilt` to `addinfo` on the left:
+`right_join(gapfilt, addinfo)` looks for countries (& continents) in `gapfilt` that have a match in `addinfo`, and add the corresponding rows of `gapfilt` to `addinfo` on the left:
 
 ```{r}
 right_join(gapfilt, addinfo) %>% 
@@ -183,7 +183,7 @@ As expected, there is no row for Norway, and an N/A value for Russia in the life
 
 #### Inner join
 
-Inner join will join only the common rows in both data frames; in this case both Norway and Russia will be absent. The ordering of the columns will be according to the ordering of the data frames specified in the inner_join function.
+`inner_join(gapfilt, addinfo)` will join only the common rows in both data frames; in this case both Norway and Russia will be absent. The ordering of the columns will be according to the ordering of the data frames specified in the inner_join function.
 
 ```{r}
 inner_join(gapfilt, addinfo) %>% 
@@ -192,7 +192,7 @@ inner_join(gapfilt, addinfo) %>%
 
 #### Full join
 
-Full join keeps all the rows from `gapfilt` and `addinfo` (matched by continent & country as usual), with column ordering specified by the order of the two data frames in the `full_join` function.
+`full_join(gapfilt, addinfo)` joins all the rows from `gapfilt` and `addinfo` (matched by continent & country as usual), with columns in the ordering specified by the order of the two data frames in the `full_join` function.
 
 ```{r}
 full_join(gapfilt, addinfo) %>% 
@@ -207,7 +207,12 @@ bind_rows(gapfilt, addinfo) %>%
   knitr::kable()
 ```
 
+Finally, the `bind_cols` function has no matching at all and simply binds all the columns of the two data frames together.
 
+```{r}
+bind_cols(gapfilt, addinfo) %>% 
+  knitr::kable()
+```
 
 #### Semi join
 
@@ -222,46 +227,53 @@ semi_join(gapfilt, addinfo) %>%
 
 #### Anti join
 
+`anti_join(gapfilt, addinfo)` are all the rows in `gapfilt` that do not have a match in `addinfo` (when we are matching by continent and country). As expected, Norway is the only row which does not have a match.
+
+`anti_join` like `semi_join` can be considered as a "filtering"" function.
 
 ```{r}
 anti_join(gapfilt, addinfo) %>% 
   knitr::kable()
 ```
 
-```{r}
-anti_join(addinfo, gapfilt) %>% 
-  knitr::kable()
-```
+
+
+
+#### Intersect, union, and set difference
+
+To investigate the intersect, union, and set difference functions, we start off with a new pair of data frames which both have the same columns.
 
 ```{r}
-bind_cols(gapfilt, addinfo) %>% 
-  knitr::kable()
-```
-
-
-
-```{r}
+#select from both data frames columns with same name 
 a <- select(gapfilt, continent, country)
 b <- select(addinfo, continent, country)
 
 knitr::kable(a)
 knitr::kable(b)
 ```
+`intersect` keeps all the rows which are common to both `a` and `b`. The relative ordering in `intersect` does not matter.
 
 ```{r}
 intersect(a,b) %>% 
   knitr::kable()
 ```
 
+`union` collects all the unique rows from both data frames. We can check that the ordering of `a` and `b` doesn't matter.
+
 ```{r}
 union(a,b) %>% 
   knitr::kable()
 ```
 
+`setdiff(a,b)` is all the rows that are in `a`, but not in `b`. Norway is the only country in `a` not in `b`, so we expect this as the output. 
+
 ```{r}
 setdiff(a,b) %>% 
   knitr::kable()
 ```
+
+Unlike `intersect` and `union`, the relative ordering of `a` and `b` does matter for `setdiff`.
+
 
 ```{r}
 setdiff(b,a) %>% 
@@ -269,24 +281,51 @@ setdiff(b,a) %>%
 ```
 
 
-##Exploring merge function
+##Exploring the merge & match functions
 For simplicity we work with the following tibbles
 
 ```{r}
-(a <- tibble(x1 = LETTERS[1:3], x2 = 1:3))
-(b <- tibble(x1 = LETTERS[c(1,2)], x3 = c("T", "F")))
-```
-```{r}
-merge(a,b)
-left_join(a,b)
-right_join(a,b)
-merge(b,a)
-merge(a,b, by = "x1")
-```
-```{r}
-match(a,b)
-match(b,a)
+a <- tibble(x1 = LETTERS[1:3], x2 = 1:3)
+b <- tibble(x1 = LETTERS[c(1,2)], x3 = c("T", "F"))
+
+knitr::kable(a)
+knitr::kable(b)
 ```
 
+Let's observe what the `merge` function does in comparision to some of the functions already explored.
+
+
+```{r}
+merge(a,b) %>% 
+  knitr::kable()
+
+inner_join(a,b) %>% 
+  knitr::kable()
+
+```
+
+We observe that for this example, `merge(a,b)` produces the same result as `inner_join(a,b)`. What about `merge(b,a)`?
+
+```{r}
+merge(b,a) %>% 
+  knitr::kable()
+
+inner_join(b,a) %>% 
+  knitr::kable()
+```
+
+According to [r-bloggers](https://www.r-bloggers.com/joining-data-frames-in-r/), `merge(a,b)` is the same as `inner_join(a,b)`. Other types of merges, which we haven't explored, are possible by specifying certain parameters within the `merge()` function.
+
+Although we did not have time to explore the `merge()` function, a nice explanation is again provided by [r-bloggers](https://www.r-bloggers.com/match-function-in-r/). 
+
+We have `match(vector1, vector2)` returns a vector consisting of the positions where the respective component in vector1 matches for the first time with that in vector2. If there is no match, N/A is returned. An example from r-bloggers is the following:
+
+```{r}
+v1 <- c("a1","b2","c1","d2")
+v2 <- c("g1","x2","d2","e2","f1","a1","a1","b2")
+match(v1, v2)
+```
+
+We interpret as follows: "a1" occurs for the first time in v2 at position 6, "b2" at position 8, no match for "c1", and "d2" in position 3.
 
 
