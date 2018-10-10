@@ -251,6 +251,7 @@ b <- select(addinfo, continent, country)
 knitr::kable(a)
 knitr::kable(b)
 ```
+
 `intersect` keeps all the rows which are common to both `a` and `b`. The relative ordering in `intersect` does not matter.
 
 ```{r}
