@@ -25,25 +25,44 @@ suppressPackageStartupMessages(library(tidyverse))
 suppressPackageStartupMessages(library(gapminder))
 ```
 
-```{r}
-fr_uk_lifeExp <- gapminder %>% 
-  rename(Year = year) %>% 
-  filter(country == "France" | country == "United Kingdom") %>% 
-  select(Year, country, lifeExp) %>% 
-  spread(key = "country", value = "lifeExp")
-  colnames(fr_uk_lifeExp)
-```
+###La vie en france, ou au royaume-uni ?
 
- - Use `knitr::kable()` to make this table look pretty in your rendered homework.
+Let's explore the trend in life expectancy for France versus the United Kingdom!
+
 ```{r}
+#create tibble fr_uk_lifeExp consisting of filtered gapminder data
+fr_uk_lifeExp <- gapminder %>% 
+  
+  #capitalise year for aesthetic purposes
+  rename(Year = year) %>% 
+  
+  #filter gapminder to France & United Kingdom
+  filter(country == "France" | country == "United Kingdom") %>% 
+  
+  #select year, country, and life expectancy
+  select(Year, country, lifeExp) %>% 
+  
+  #spread the life expectancy data by country
+  spread(key = "country", value = "lifeExp")
+
+#produce nice table
 knitr::kable(fr_uk_lifeExp)
 ```
  
 - Take advantage of this new data shape to scatterplot life expectancy for one country against that of another.
 ```{r}
+#plot United Kingdom life expectancy against that of France
 fr_uk_lifeExp %>% 
 ggplot(aes(`United Kingdom`, France)) +
-  geom_point()
+  
+  #make scatter plot
+  geom_point() +
+  
+  #interpolate using smooth curve
+  geom_smooth(method = loess) +
+  
+  #plot title
+  ggtitle("Life expectancy trend of United Kingdom versus France, 1952-2007")
 ```
 
 ##Join Prompts
@@ -60,15 +79,10 @@ Create a second data frame, complementary to Gapminder. Join this with (part of)
         One row per country, a country variable and one or more variables with extra info, such as language spoken, NATO membership, national animal, or capitol city.
         One row per continent, a continent variable and one or more variables with extra info, such as northern versus southern hemisphere.
         
-We shall build a second data frame of countries, with national animal, NATO membership
+We shall build a second data frame of countries Canada, United Kingdom, France, and Russia, with national animal, NATO membership. Note that we specifically chose Russia because it is NOT contained in the gapminder data frame. 
 
 
 ```{r}
-#x1 <- unique(select(gapminder, continent))
-#`Northern Hemisphere` <- c("Yes", "Yes", "Yes", "Yes", "No")
-#`Southern Hemisphere` <- c("Yes", "No", "Yes", "Yes", "Yes")
-#mutate(x1,`Northern Hemisphere`, `Southern Hemisphere`)
-
 #Creating our own tibble
 
 #column of chosen countries
@@ -77,10 +91,8 @@ countries <- c("Canada", "United Kingdom", "France", "Russia")
 #column of continents corresponding to chosen countries
 continent<- c("Americas", "Europe", "Europe", "Asia") 
 
-#Lan <- c("English, French", "English", "French") `Official Language(s)` = Lan
-
 #column of national animal of corresponding country
-Anim <- c("Beaver", "Lion", "Gallic Rooster", "Bear") #national animal of corresponding coutries chosen above
+Anim <- c("Beaver", "Lion", "Gallic Rooster", "Bear") 
 
 #column of NATO membership
 NATO <- c("Yes", "Yes", "Yes", "No") 
@@ -89,38 +101,47 @@ NATO <- c("Yes", "Yes", "Yes", "No")
 Cap <- c("Ottawa", "London", "Paris", "Moscow") 
 
 #create the tibble `addinfo` consisting of all the above columns
-(addinfo <- tibble(continent = continent, country = countries,  `national animal` = Anim, `NATO membership` = NATO, `capital city` = Cap))
+addinfo <- tibble(continent = continent, country = countries,  `national animal` = Anim, `NATO membership` = NATO, `capital city` = Cap)
+
+knitr::kable(addinfo)
 ```
+We shall also create a filtered subset of gapminder tibble, which will include Canada, France, United Kingdom, and Norway. Note we added Norway because it is not contained in our data frame constructed earlier.
+
 ```{r}
-#filter gapminder dataset to year 2007, and the countries in the countries column created earlier
-(gapfilt <- gapminder %>% 
+#filter gapminder dataset to year 2007, 
+#and the countries in the countries column created earlier,
+#but include Norway
+gapfilt <- gapminder %>% 
   filter(year == 2007, country%in%countries | country == "Norway") %>% 
   
-  #select subset of data in 2007
-  select(continent, country, lifeExp))
-```
+  #select subset of data in 2007 (for simplicity)
+  select(continent, country, lifeExp)
 
+knitr::kable(gapfilt)
+```
+The two data frames have two columns in common: continent, and country Let's first see what happens when we left join by country only.
 
 ```{r}
 #left join by country
-left_join(gapfilt, addinfo, by = "country")
+left_join(gapfilt, addinfo, by = "country") %>% 
+  knitr::kable()
 ```
-```{r}
-left_join(gapfilt, addinfo)
-```
-```{r}
-left_join(addinfo, gapfilt)
-```
-
-
+We see that left joining by country only, the common column of continent is not automatically recognised - instead they are treated as two distinct columns and automatically ".x" and ".y" demarcations.
 
 ```{r}
+left_join(gapfilt, addinfo) %>% 
+  knitr::kable()
+```
+```{r}
+left_join(addinfo, gapfilt) %>% 
+  knitr::kable()
+```
 
 
-#left_join(addinfo, gapfilt , by = "country")
 
-
-right_join(gapfilt, addinfo)
+```{r}
+right_join(gapfilt, addinfo) %>% 
+  knitr::kable()
 ```
 
 ```{r}
@@ -128,11 +149,13 @@ right_join(addinfo, gapfilt)
 ```
 
 ```{r}
-right_join(gapfilt, addinfo)
+right_join(gapfilt, addinfo) %>% 
+  knitr::kable()
 ```
 
 ```{r}
-inner_join(gapfilt, addinfo)
+inner_join(gapfilt, addinfo) %>% 
+  knitr::kable()
 ```
 
 
@@ -141,64 +164,97 @@ inner_join(addinfo, gapfilt)
 ```
 
 ```{r}
-full_join(gapfilt, addinfo)
-bind_rows(gapfilt, addinfo)
+full_join(gapfilt, addinfo) %>% 
+  knitr::kable()
+```
+
+```{r}
+bind_rows(gapfilt, addinfo) %>% 
+  knitr::kable()
 ```
 
 
 ```{r}
-full_join(addinfo, gapfilt)
+full_join(addinfo, gapfilt) %>% 
+  knitr::kable()
 ```
 
 
 ```{r}
-semi_join(gapfilt, addinfo)
+semi_join(gapfilt, addinfo) %>% 
+  knitr::kable()
 ```
 
 ```{r}
-semi_join(addinfo, gapfilt)
+semi_join(addinfo, gapfilt) %>% 
+  knitr::kable()
 ```
 
 
 ```{r}
-anti_join(gapfilt, addinfo)
+anti_join(gapfilt, addinfo) %>% 
+  knitr::kable()
 ```
 
 ```{r}
-anti_join(addinfo, gapfilt)
+anti_join(addinfo, gapfilt) %>% 
+  knitr::kable()
 ```
 
 ```{r}
-bind_cols(gapfilt, addinfo)
+bind_cols(gapfilt, addinfo) %>% 
+  knitr::kable()
 ```
 
 
 
 ```{r}
-(a <- select(gapfilt, continent, country))
-(b <- select(addinfo, continent, country))
+a <- select(gapfilt, continent, country)
+b <- select(addinfo, continent, country)
+
+knitr::kable(a)
+knitr::kable(b)
 ```
 
 ```{r}
-intersect(a,b)
+intersect(a,b) %>% 
+  knitr::kable()
 ```
 
 ```{r}
-union(a,b)
+union(a,b) %>% 
+  knitr::kable()
 ```
 
 ```{r}
-setdiff(a,b)
+setdiff(a,b) %>% 
+  knitr::kable()
 ```
 
 ```{r}
-setdiff(b,a)
+setdiff(b,a) %>% 
+  knitr::kable()
 ```
 
-#intersect(addinfo, gapfilt)
-#union()
-#setdiff()
 
+##Exploring merge function
+For simplicity we work with the following tibbles
+
+```{r}
+(a <- tibble(x1 = LETTERS[1:3], x2 = 1:3))
+(b <- tibble(x1 = LETTERS[c(1,2)], x3 = c("T", "F")))
+```
+```{r}
+merge(a,b)
+left_join(a,b)
+right_join(a,b)
+merge(b,a)
+merge(a,b, by = "x1")
+```
+```{r}
+match(a,b)
+match(b,a)
+```
 
 
 
