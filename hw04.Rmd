@@ -27,13 +27,12 @@ suppressPackageStartupMessages(library(gapminder))
 
 ###La vie en france, ou au royaume-uni ?
 
-Let's explore the trend in life expectancy for France versus the United Kingdom!
-
+Is life better in France or the United Kingdom? Let's explore the comparative trend in their life expectancies! 
 ```{r}
 #create tibble fr_uk_lifeExp consisting of filtered gapminder data
 fr_uk_lifeExp <- gapminder %>% 
   
-  #capitalise year for aesthetic purposes
+  #capitalise year (for aesthetic purposes)
   rename(Year = year) %>% 
   
   #filter gapminder to France & United Kingdom
@@ -49,7 +48,8 @@ fr_uk_lifeExp <- gapminder %>%
 knitr::kable(fr_uk_lifeExp)
 ```
  
-- Take advantage of this new data shape to scatterplot life expectancy for one country against that of another.
+Now we take advantage of this data shape to make a plot of their life expectancies against each other.
+
 ```{r}
 #plot United Kingdom life expectancy against that of France
 fr_uk_lifeExp %>% 
@@ -65,21 +65,28 @@ ggplot(aes(`United Kingdom`, France)) +
   ggtitle("Life expectancy trend of United Kingdom versus France, 1952-2007")
 ```
 
+It looks like life is good in France and the United Kingdom! We'll just have to spend some time in both :) 
+
 ##Join Prompts
 
 **Problem:** You have two data sources and you need info from both in one new data object.
 
 **Solution:** Perform a join, which borrows terminology from the database world, specifically SQL.
 
-Prompts:
 
-Activity #1
+###Activity #1
 
-Create a second data frame, complementary to Gapminder. Join this with (part of) Gapminder using a dplyr join function and make some observations about the process and result. Explore the different types of joins. Examples of a second data frame you could build:
-        One row per country, a country variable and one or more variables with extra info, such as language spoken, NATO membership, national animal, or capitol city.
-        One row per continent, a continent variable and one or more variables with extra info, such as northern versus southern hemisphere.
+Create a second data frame, complementary to Gapminder. Join this with (part of) Gapminder using a dplyr join function and make some observations about the process and result. Explore the different types of joins. 
+
+Before we begin, we make some remarks about the two data sets we will join.
         
-We shall build a second data frame of countries Canada, United Kingdom, France, and Russia, with national animal, NATO membership. Note that we specifically chose Russia because it is NOT contained in the gapminder data frame. 
+- We shall build a second data frame of countries consisting of Canada, United Kingdom, France, and Russia. The variables will be national animal, NATO membership, and capital city. 
+
+- We shall use a subset of the gapminder data.frame consisting of countries Canada, France, United Kingdom, and Norway, with their respective life expectancy in the year 2007.
+
+- Note that we specifically chose Russia because it is NOT contained in the gapminder data frame. Moreover, Norway is NOT contained in our own constructed tibble, so there is overlap, but not completely.
+
+- We also chose to include continent as a column in our constructed data frame so that their are two columns (continent and country) which are the same in both data frames.
 
 
 ```{r}
@@ -101,33 +108,53 @@ NATO <- c("Yes", "Yes", "Yes", "No")
 Cap <- c("Ottawa", "London", "Paris", "Moscow") 
 
 #create the tibble `addinfo` consisting of all the above columns
-addinfo <- tibble(continent = continent, country = countries,  `national animal` = Anim, `NATO membership` = NATO, `capital city` = Cap)
+addinfo <- tibble(continent = continent, country = countries,  
+                  `national animal` = Anim, `NATO membership` = NATO, `capital city` = Cap)
 
+
+#make table of output'
 knitr::kable(addinfo)
 ```
-We shall also create a filtered subset of gapminder tibble, which will include Canada, France, United Kingdom, and Norway. Note we added Norway because it is not contained in our data frame constructed earlier.
+
+This table is the `addinfo` data frame.
+
+Now we create the filtered gapminder data frame.
 
 ```{r}
 #filter gapminder dataset to year 2007, 
 #and the countries in the countries column created earlier,
 #but include Norway
-gapfilt <- gapminder %>% 
+gaptemp <- gapminder %>% 
   filter(year == 2007, country%in%countries | country == "Norway") %>% 
   
   #select subset of data in 2007 (for simplicity)
   select(continent, country, lifeExp)
 
+ 
+#the continent and country columns in gapminder are of `factor` type; 
+#change them to `character` to match our constructed tibble above
+gapfilt <- transmute(gaptemp, continent = as.character(continent), 
+                     country = as.character(country), lifeExp)
+
 knitr::kable(gapfilt)
 ```
-The two data frames have two columns in common: continent, and country Let's first see what happens when we left join by country only.
+
+Table: Life expectancy in 2007.
+
+Now let's investigate the various join functions. The two data frames have two columns in common: continent, and country. Let's see  first what happens when we (left) join by country only.
 
 ```{r}
 #left join by country
 left_join(gapfilt, addinfo, by = "country") %>% 
   knitr::kable()
 ```
-We see that left joining by country only, the common column of continent is not automatically recognised - instead they are treated as two distinct columns and automatically ".x" and ".y" demarcations.
 
+
+The left join by country looks for countries in `addinfo` that match with `gapfilt` , and if found, the rows of `addinfo` are added (on the right) to `gapfilt`. Notice that the ordering of rows doesn't matter for matching (e.g. France is the second row in `gapfilt` but the third row in `addinfo`).
+
+We see that left joining by country only, the common column of continent is not automatically recognised - instead they are treated as two distinct columns and automatically given ".x" and ".y" demarcations. Note as expected, Russia does not appear in the table, because it is not in `gapfilt`.
+
+From here on, we join by continent and country (the default, unless specified otherwise).
 ```{r}
 left_join(gapfilt, addinfo) %>% 
   knitr::kable()
